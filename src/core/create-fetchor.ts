@@ -33,8 +33,8 @@ export function createFetchor<
 
       return async (payload?: any, opts?: any): Promise<any> => {
         const base = config.baseURL ?? "";
-        let final = withParams(ep.url, payload.params);
-        final = withQuery(final, opts.query);
+        let final = withParams(ep.url, payload?.params);
+        final = withQuery(final, opts?.query);
 
         const init: RequestInit = {
           method: ep.method ?? "GET",
@@ -46,7 +46,7 @@ export function createFetchor<
 
         if (
           ["POST", "PUT", "PATCH"].includes(init.method!) &&
-          payload.body !== undefined
+          payload?.body !== undefined
         ) {
           init.body = JSON.stringify(payload.body);
         }
