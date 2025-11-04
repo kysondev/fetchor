@@ -19,29 +19,41 @@ export type FetchorConfig = {
   ) => void | Promise<void>;
 };
 
-export type EndpointDef<P = any, R = any> = {
-  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-  url: string;
-  parse?: (res: Response) => Promise<R>;
-  description?: string;
-  defaultParams?: P;
-};
-
 export type Query = Record<string, string | number | boolean | undefined>;
 
-export type EndpointMap = Record<string, EndpointDef<any, any>>;
+export type ParseFn<R> = (res: Response) => Promise<R>;
 
-type PayloadOf<P> = { params?: P; body?: any };
+export type GetCall<P = any> = { params?: P; query?: Query };
+export type MutCall<B = any> = {
+  body?: B;
+  params?: Record<string, string | number>;
+  query?: Query;
+};
 
-export type FetchorClient<E extends EndpointMap = {}> = {
-  define<Name extends string, P = any, R = any>(
-    name: Name,
-    options: EndpointDef<P, R>
-  ): FetchorClient<E & Record<Name, EndpointDef<P, R>>>;
+export type GroupBuilder = {
+  get<P = any, R = any>(
+    path: string,
+    opts?: { parse?: ParseFn<R> }
+  ): (args?: GetCall<P> & { headers?: Record<string, string> }) => Promise<R>;
+  delete<P = any, R = any>(
+    path: string,
+    opts?: { parse?: ParseFn<R> }
+  ): (args?: GetCall<P> & { headers?: Record<string, string> }) => Promise<R>;
+  post<B = any, R = any>(
+    path: string,
+    opts?: { parse?: ParseFn<R> }
+  ): (args?: MutCall<B> & { headers?: Record<string, string> }) => Promise<R>;
+  put<B = any, R = any>(
+    path: string,
+    opts?: { parse?: ParseFn<R> }
+  ): (args?: MutCall<B> & { headers?: Record<string, string> }) => Promise<R>;
+  patch<B = any, R = any>(
+    path: string,
+    opts?: { parse?: ParseFn<R> }
+  ): (args?: MutCall<B> & { headers?: Record<string, string> }) => Promise<R>;
+};
 
-  define<Defs extends EndpointMap>(defs: Defs): FetchorClient<E & Defs>;
-} & {
-  [K in keyof E]: E[K] extends EndpointDef<infer P, infer R>
-    ? (payload?: PayloadOf<P>, opts?: { query?: Query }) => Promise<R>
-    : never;
+export type FetchorClient = {
+  /** Create a grouped route builder. */
+  group(base: string): GroupBuilder;
 };
