@@ -1,5 +1,12 @@
 import { FetchorError } from "./error";
-import { FetchorClient, FetchorConfig, GroupBuilder, MutCall, GetCall, ParseFn } from "./types";
+import {
+  FetchorClient,
+  FetchorConfig,
+  GroupBuilder,
+  MutCall,
+  GetCall,
+  ParseFn,
+} from "./types";
 import { withParams, withQuery } from "./utils";
 
 export function createFetchor(config: FetchorConfig = {}): FetchorClient {
@@ -7,6 +14,7 @@ export function createFetchor(config: FetchorConfig = {}): FetchorClient {
     get(_, prop: string) {
       if (prop === "group") {
         const group = (base: string): GroupBuilder => {
+          // Shared request function used by all methods.
           const coreCall = async (
             method: string,
             path: string,
@@ -14,9 +22,14 @@ export function createFetchor(config: FetchorConfig = {}): FetchorClient {
             parse?: ParseFn<any>
           ) => {
             const endpoint = `${method} ${base}${path}`;
+            // Build the full URL.
             const urlPath = withParams(base + path, args?.params);
-            const url = withQuery((config.baseURL ?? "") + urlPath, args?.query);
+            const url = withQuery(
+              (config.baseURL ?? "") + urlPath,
+              args?.query
+            );
 
+            // Headers from config or default JSON.
             const headersFromConfig =
               typeof config.headers === "function"
                 ? config.headers()
@@ -31,18 +44,33 @@ export function createFetchor(config: FetchorConfig = {}): FetchorClient {
             };
 
             if (
-              ["POST", "PUT", "PATCH"].includes((init.method || "GET").toUpperCase()) &&
+              ["POST", "PUT", "PATCH"].includes(
+                (init.method || "GET").toUpperCase()
+              ) &&
               args?.body !== undefined
             ) {
+              // Add JSON body for writes.
               init.body = JSON.stringify(args.body);
             }
 
             try {
-              await config.onRequest?.({ endpoint, url, options: init, payload: args });
+              // onRequest hook
+              await config.onRequest?.({
+                endpoint,
+                url,
+                options: init,
+                payload: args,
+              });
 
               const res = await fetch(url, init);
 
-              await config.onResponse?.({ endpoint, url, options: init, response: res });
+              // onResponse hook
+              await config.onResponse?.({
+                endpoint,
+                url,
+                options: init,
+                response: res,
+              });
 
               if (!res.ok) {
                 let body: any;
@@ -60,9 +88,15 @@ export function createFetchor(config: FetchorConfig = {}): FetchorClient {
                 throw err;
               }
 
+              // Use custom parser if given, else JSON.
               return parse ? await parse(res) : await res.json();
             } catch (err) {
-              await config.onError?.(err as Error, { endpoint, url, options: init });
+              // Send unexpected errors to the hook too.
+              await config.onError?.(err as Error, {
+                endpoint,
+                url,
+                options: init,
+              });
               throw err;
             }
           };

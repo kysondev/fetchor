@@ -1,3 +1,4 @@
+// Replace :param in the path with values.
 export function withParams(
   url: string,
   params?: Record<string, string | number>
@@ -10,6 +11,7 @@ export function withParams(
   return u;
 }
 
+// Add ?key=value to the URL, skip undefined.
 export function withQuery(
   url: string,
   query?: Record<string, string | number | boolean | undefined>
