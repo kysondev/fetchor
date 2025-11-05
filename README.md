@@ -107,7 +107,7 @@ const posts = api.group("/posts");
 const list = posts.get<never, any[]>("/");
 const byUser = posts.get<{ id: number }, any[]>("/");
 
-await list({ query: { _limit: 10, _page: 1 } });
+await list({ query: { limit: 10, page: 1 } });
 await byUser({ query: { userId: 2 } });
 
 const getPost = posts.get<{ id: number }, any>("/:id");
@@ -137,13 +137,13 @@ await getProfile({ headers: { Authorization: "Bearer token" } });
 const apiWithHooks = createFetchor({
   baseURL: "https://api.example.com",
   onRequest: ({ endpoint, url, options }) => {
-    console.debug("→", endpoint, url, options);
+    console.debug("Request: ", endpoint, url, options);
   },
   onResponse: ({ endpoint, response }) => {
-    console.debug("←", endpoint, response.status);
+    console.debug("Response: ", endpoint, response.status);
   },
   onError: (err, { endpoint }) => {
-    console.error("✖", endpoint, err);
+    console.error("Error: ", endpoint, err);
   },
 });
 ```
