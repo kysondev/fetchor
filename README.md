@@ -1,15 +1,19 @@
-# fetchor
+# 🪶 fetchor
 
-Lightweight TypeScript library for calling HTTP APIs. It wraps the Fetch API with a small set of helpers for grouping routes, handling params and query strings, and plugging in hooks.
+[![npm version](https://img.shields.io/npm/v/fetchor.svg?color=blue)](https://www.npmjs.com/package/fetchor)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/fetchor?color=teal)](https://bundlephobia.com/package/fetchor)
+[![license](https://img.shields.io/github/license/kysondev/fetchor.svg)](./LICENSE)
+
+**fetchor** is a lightweight TypeScript library built on top of the Fetch API. It provides a simple way to define and call typed endpoints, group routes, and plug in request and response hooks without adding heavy abstractions.
 
 ## Features
-- Group routes and define endpoints in one place
-- Path params (`:id`) and query string helpers
-- Global headers or a header function that runs per request
-- Custom response parsing (default is `res.json()`)
-- Hooks: `onRequest`, `onResponse`, `onError`
-- Typed helpers for GET/DELETE and POST/PUT/PATCH bodies
-- Works in browsers and Node.js (Node 18+)
+- **Type-safe**: full TypeScript support for params, query, and response types.
+- **Simple route organization**: group endpoints under shared base paths.
+- **Flexible configuration**: global headers, dynamic header functions, and hooks.
+- **Composable design**: call endpoints like functions without extra wrappers.
+- **Custom response parsing**: use .json(), .text(), .blob(), or any parser.
+- **Hooks for lifecycle control**: intercept requests, responses, and errors.
+- **Modern compatibility**: works in browsers and Node.js 18+.
 
 ## Install
 
@@ -54,13 +58,6 @@ const created = await createUser({ body: { name: "New", username: "newuser", ema
 
 See also: `examples/test.ts`, `examples/test.js`.
 
-## Concepts
-
-- Client: `createFetchor(config)` creates a client bound to a `baseURL`, headers, and hooks.
-- Grouping: `client.group(base)` creates a builder for routes that share a base path.
-- Endpoints: `group.get/post/put/patch/delete(path, { parse? })` returns a function you call later.
-- Calls: Pass `params`, `query`, `body`, and `headers` when invoking the endpoint function.
-
 ## API Reference
 
 ### createFetchor(config?: FetchorConfig): FetchorClient
@@ -77,26 +74,25 @@ Returns a `FetchorClient` with:
 
 ### GroupBuilder
 
-Builders create endpoint call functions. By default responses parse as JSON. Provide `opts.parse` to override.
+Builders generate endpoint call functions.  
+By default, responses are parsed as JSON. Override with `opts.parse`.
 
-- `get<P = any, R = any>(path, opts?) => (args?: { params?: P; query?: Query; headers?: Record<string,string> }) => Promise<R>`
-- `delete<P = any, R = any>(path, opts?) => (args?: { params?: P; query?: Query; headers?: Record<string,string> }) => Promise<R>`
-- `post<B = any, R = any>(path, opts?) => (args?: { body?: B; params?: Record<string,string|number>; query?: Query; headers?: Record<string,string> }) => Promise<R>`
-- `put<B = any, R = any>(...)`
-- `patch<B = any, R = any>(...)`
+``` ts
+group.get<P, R>(path, opts?)  
+group.post<B, R>(path, opts?)  
+group.put<B, R>(path, opts?)  
+group.patch<B, R>(path, opts?)  
+group.delete<P, R>(path, opts?)
+```
 
-Path parameters are declared as `:param` within `path`, for example `"/:id"`. They are URL encoded when substituted.
+#### Parameters
+- path: The route for this endpoint (e.g. "/:id" or "/users").
+- opts: Optional settings, such as a custom parse function for handling the response.
+- P: Type of the path parameters (for example { id: number }).
+- B: Type of the request body (used in POST, PUT, PATCH).
+- R: Type of the response data (the value returned by the call).
 
-`Query` type: `Record<string, string | number | boolean | undefined>` (undefined values are skipped).
-
-### Errors
-
-Non 2xx responses throw `FetchorError` with fields:
-- `name: "FetchorError"`
-- `status: number`
-- `body: any` — parsed JSON if available, otherwise text
-
-`onError` is called for both HTTP errors and unexpected runtime errors.
+Path parameters use `:param`, and query parameters automatically skip undefined values.
 
 ## Usage Patterns
 
@@ -180,7 +176,8 @@ The following items are planned but not yet implemented:
 
 ## Contributing
 
-Issues and PRs are welcome. See `examples/` to quickly test changes locally.
+Contributions are welcome.  
+See `examples/` to test locally, and mark beginner-friendly tasks as `good first issue`.
 
 ## License
 
