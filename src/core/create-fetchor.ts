@@ -62,7 +62,52 @@ export function createFetchor(config: FetchorConfig = {}): FetchorClient {
                 payload: args,
               });
 
-              const res = await fetch(url, init);
+              const maxAttempts = config.retry?.attempts ?? 1;
+              let attemptsLeft = maxAttempts;
+
+              let delay = config.retry?.delay ?? 1000;
+              const backoff = config.retry?.backoff ?? false;
+
+              let res: Response | undefined;
+
+              while (attemptsLeft > 0) {
+                try {
+                  if (init.signal?.aborted) {
+                    throw new DOMException("Aborted", "AbortError");
+                  }
+
+                  res = await fetch(url, init);
+
+                  if (res.ok) break;
+
+                  if (res.status >= 400 && res.status < 500) {
+                    throw new FetchorError(
+                      "Client error, not retrying",
+                      res.status
+                    );
+                  }
+                } catch (err) {
+                  const isLastTry = attemptsLeft === 1;
+
+                  if (
+                    err instanceof FetchorError ||
+                    err instanceof DOMException ||
+                    isLastTry
+                  ) {
+                    throw err;
+                  }
+                }
+
+                await new Promise((r) => setTimeout(r, delay));
+
+                if (backoff) delay *= 2;
+
+                attemptsLeft--;
+              }
+
+              if (!res) {
+                throw new Error("Failed to fetch and no response received");
+              }
 
               // onResponse hook
               await config.onResponse?.({

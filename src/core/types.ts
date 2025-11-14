@@ -17,17 +17,27 @@ export type FetchorConfig = {
     err: Error,
     ctx: { endpoint: string; url: string; options: RequestInit }
   ) => void | Promise<void>;
+  retry?: {
+    attempts?: number;
+    delay?: number;
+    backoff?: boolean;
+  };
 };
 
 export type Query = Record<string, string | number | boolean | undefined>;
 
 export type ParseFn<R> = (res: Response) => Promise<R>;
 
-export type GetCall<P = any> = { params?: P; query?: Query };
+export type GetCall<P = any> = {
+  params?: P;
+  query?: Query;
+  retry?: false | { attempts?: number; delay?: number; backoff?: boolean };
+};
 export type MutCall<B = any> = {
   body?: B;
   params?: Record<string, string | number>;
   query?: Query;
+  retry?: false | { attempts?: number; delay?: number; backoff?: boolean };
 };
 
 export type GroupBuilder = {
